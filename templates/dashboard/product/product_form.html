@@ -127,7 +127,12 @@
                 <div class="row">
                   {{ product_form.name|materializecss }}
                 </div>
-                {% for attribute_field in product_form.iter_attribute_fields %}
+                {% for attribute_field in product_form.iter_product_attribute_fields %}
+                  <div class="row">
+                    {{ attribute_field|materializecss:"input-field s12" }}
+                  </div>
+                {% endfor %}
+                {% for attribute_field in product_form.iter_custom_attribute_fields %}
                   <div class="row">
                     {{ attribute_field|materializecss:"input-field s12" }}
                   </div>
