@@ -227,6 +227,7 @@ const variantPriceContainer = document.getElementById('variant-price-component')
 
 if (variantPickerContainer) {
   const variantPickerData = JSON.parse(variantPickerContainer.dataset.variantPickerData);
+  const customAttributeData = JSON.parse(variantPickerContainer.dataset.customAttributeData);
   ReactDOM.render(
     <VariantPicker
       onAddToCartError={onAddToCartError}
@@ -234,6 +235,7 @@ if (variantPickerContainer) {
       store={variantPickerStore}
       url={variantPickerContainer.dataset.action}
       variantAttributes={variantPickerData.variantAttributes}
+      customAttributes={customAttributeData.customAttributes}
       variants={variantPickerData.variants}
     />,
     variantPickerContainer
