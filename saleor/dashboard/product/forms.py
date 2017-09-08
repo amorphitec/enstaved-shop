@@ -57,25 +57,34 @@ class ProductClassForm(forms.ModelForm):
                 'Attributes specific to each variant'),
             'product_attributes': pgettext_lazy(
                 'Product class form label',
-                'Attributes common to all variants')}
+                'Attributes common to all variants'),
+            'custom_attributes': pgettext_lazy(
+                'Product class form label',
+                'User-customizable attributes common to all variants')}
 
     def clean(self):
         data = super(ProductClassForm, self).clean()
         has_variants = self.cleaned_data['has_variants']
         product_attr = set(self.cleaned_data['product_attributes'])
         variant_attr = set(self.cleaned_data['variant_attributes'])
+        custom_attr = set(self.cleaned_data['custom_attributes'])
         if not has_variants and len(variant_attr) > 0:
             msg = pgettext_lazy(
                 'Product class form error',
                 'Product variants are disabled.')
             self.add_error('variant_attributes', msg)
-        if len(product_attr & variant_attr) > 0:
+        if (len(product_attr & variant_attr) > 0 or
+            len(custom_attr & variant_attr) > 0):
             msg = pgettext_lazy(
                 'Product class form error',
                 'A single attribute can\'t belong to both a product '
                 'and its variant.')
             self.add_error('variant_attributes', msg)
-
+        if len(product_attr & custom_attr) > 0:
+            msg = pgettext_lazy(
+                'Product class form error',
+                'A single attribute can\'t be both fixed and customizable')
+            self.add_error('custom_attributes', msg)
         if self.instance.pk:
             variants_changed = not (self.fields['has_variants'].initial ==
                                     has_variants)
@@ -96,10 +105,11 @@ class ProductForm(forms.ModelForm):
 
     class Meta:
         model = Product
-        exclude = ['attributes', 'product_class']
+        exclude = ['attributes', 'custom_attributes', 'product_class']
 
     def __init__(self, *args, **kwargs):
         self.product_attributes = []
+        self.custom_attributes = []
         super(ProductForm, self).__init__(*args, **kwargs)
         field = self.fields['name']
         field.widget.attrs['placeholder'] = pgettext_lazy(
@@ -108,12 +118,29 @@ class ProductForm(forms.ModelForm):
         field.widget.attrs['data-placeholder'] = pgettext_lazy(
             'Product form placeholder', 'Search')
         product_class = self.instance.product_class
+        self.custom_attributes = product_class.custom_attributes.all()
+        self.custom_attributes = self.custom_attributes.prefetch_related(
+            'values')
         self.product_attributes = product_class.product_attributes.all()
         self.product_attributes = self.product_attributes.prefetch_related(
             'values')
-        self.prepare_fields_for_attributes()
+        self.prepare_fields_for_custom_attributes()
+        self.prepare_fields_for_product_attributes()
 
-    def prepare_fields_for_attributes(self):
+    def prepare_fields_for_custom_attributes(self):
+        for attribute in self.custom_attributes:
+            field_defaults = {
+                'label': attribute.name,
+                'required': False,
+                'initial': self.instance.get_custom_attribute(attribute.pk)}
+            if attribute.has_values():
+                field = CachingModelChoiceField(
+                    queryset=attribute.values.all(), **field_defaults)
+            else:
+                field = forms.CharField(**field_defaults)
+            self.fields[attribute.get_formfield_name()] = field
+
+    def prepare_fields_for_product_attributes(self):
         for attribute in self.product_attributes:
             field_defaults = {
                 'label': attribute.name,
@@ -126,19 +153,31 @@ class ProductForm(forms.ModelForm):
                 field = forms.CharField(**field_defaults)
             self.fields[attribute.get_formfield_name()] = field
 
-    def iter_attribute_fields(self):
+    def iter_custom_attribute_fields(self):
+        for attr in self.custom_attributes:
+            yield self[attr.get_formfield_name()]
+
+    def iter_product_attribute_fields(self):
         for attr in self.product_attributes:
             yield self[attr.get_formfield_name()]
 
     def save(self, commit=True):
-        attributes = {}
+        product_attributes = {}
         for attr in self.product_attributes:
             value = self.cleaned_data.pop(attr.get_formfield_name())
             if isinstance(value, AttributeChoiceValue):
-                attributes[smart_text(attr.pk)] = smart_text(value.pk)
+                product_attributes[smart_text(attr.pk)] = smart_text(value.pk)
             else:
-                attributes[smart_text(attr.pk)] = value
-        self.instance.attributes = attributes
+                product_attributes[smart_text(attr.pk)] = value
+        self.instance.attributes = product_attributes
+        custom_attributes = {}
+        for attr in self.custom_attributes:
+            value = self.cleaned_data.pop(attr.get_formfield_name())
+            if isinstance(value, AttributeChoiceValue):
+                custom_attributes[smart_text(attr.pk)] = smart_text(value.pk)
+            else:
+                custom_attributes[smart_text(attr.pk)] = value
+        self.instance.custom_attributes = custom_attributes
         instance = super(ProductForm, self).save(commit=commit)
         search_index.insert_or_update_object(instance)
         return instance
