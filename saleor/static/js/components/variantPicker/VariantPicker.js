@@ -92,16 +92,36 @@ export default class VariantPicker extends Component {
       selection: Object.assign({}, this.state.selection, { [attrId]: valueId })
     }, () => {
       this.matchVariantFromSelection();
-      let params = {};
-      Object.keys(this.state.selection).forEach(attrId => {
-        const attribute = this.matchAttribute(attrId);
-        const value = this.matchAttributeValue(attribute, this.state.selection[attrId]);
-        if (attribute && value) {
-          params[attribute.slug] = value.slug;
-        }
-      });
-      history.pushState(null, null, '?' + queryString.stringify(params));
+      this.updateParams();
     });
+  }
+
+  handleCustomAttributeChange = (attrId, valueId) => {
+    this.setState({
+      customizations: Object.assign({}, this.state.customizations, { [attrId]: valueId })
+    }, () => {
+      this.updateParams();
+    });
+  }
+
+  updateParams() {
+    // Update url params based on selected variant and custom attributes.
+    let params = {};
+    Object.keys(this.state.selection).forEach(attrId => {
+      const attribute = this.matchAttribute(attrId);
+      const value = this.matchAttributeValue(attribute, this.state.selection[attrId]);
+      if (attribute && value) {
+        params[attribute.slug] = value.slug;
+      }
+    });
+    Object.keys(this.state.customizations).forEach(attrId => {
+      const attribute = this.matchAttribute(attrId);
+      const value = this.matchAttributeValue(attribute, this.state.customizations[attrId]);
+      if (attribute && value) {
+        params[attribute.slug] = value.slug;
+      }
+    });
+    history.pushState(null, null, '?' + queryString.stringify(params));
   }
 
   handleQuantityChange = (event) => {
@@ -171,6 +191,7 @@ export default class VariantPicker extends Component {
         {customAttributes.map(attribute =>
           <AttributeSelectionWidget
             attribute={attribute}
+            handleChange={this.handleCustomAttributeChange}
             selected={customizations[attribute.pk]}
           />
         )}
