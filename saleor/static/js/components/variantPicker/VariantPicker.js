@@ -16,6 +16,7 @@ export default class VariantPicker extends Component {
     onAddToCartSuccess: PropTypes.func.isRequired,
     store: PropTypes.object.isRequired,
     url: PropTypes.string.isRequired,
+    customAttributes: PropTypes.array.isRequired,
     variantAttributes: PropTypes.array.isRequired,
     variants: PropTypes.array.isRequired
   }
@@ -23,44 +24,58 @@ export default class VariantPicker extends Component {
   constructor(props) {
     super(props);
     const { variants } = this.props;
+    const { customAttributes } = this.props;
     const defaultVariant = variants.filter(v => !!Object.keys(v.attributes).length)[0];
     const params = queryString.parse(location.search);
+    // Set default custom attributes
+    let customizations = {};
+    customAttributes.forEach(attribute => {
+      customizations[attribute.pk] = attribute.default.toString();
+    });
+    // Parse attributes from url params
     let selection = {};
     if (Object.keys(params).length) {
-      Object.keys(params).some((name) => {
+      Object.keys(params).map(name => {
         const valueName = params[name];
-        const attribute = this.matchAttributeBySlug(name);
-        const value = this.matchAttributeValueByName(attribute, valueName);
-        if (attribute && value) {
-          selection[attribute.pk] = value.pk.toString();
-        } else {
-          // if attribute doesn't exist - show variant
-          selection = variant ? variant.attributes : {};
-          // break
-          return true;
+        const variantAttribute = this.matchVariantAttributeBySlug(name);
+        const customAttribute = this.matchCustomAttributeBySlug(name);
+        if (customAttribute) {
+          const value = this.matchAttributeValueByName(customAttribute, valueName);
+          if (value) {
+            customizations[customAttribute.pk] = value.pk.toString();
+          }
+        } else if (variantAttribute) {
+          const value = this.matchAttributeValueByName(variantAttribute, valueName);
+          if (value) {
+            selection[variantAttribute.pk] = value.pk.toString();
+          }
         }
       });
-    } else if (Object.keys(variant).length) {
+    }
+    // Use default variant attributes if no variant attributes found in url params
+    if (!Object.keys(selection).length) {
       selection = defaultVariant.attributes;
     }
     this.state = {
       errors: {},
       quantity: 1,
-      selection: selection
+      selection: selection,
+      customizations: customizations
     };
     this.matchVariantFromSelection();
   }
 
   handleAddToCart = () => {
     const { onAddToCartSuccess, onAddToCartError, store } = this.props;
-    const { quantity } = this.state;
+    const { quantity, customizations } = this.state;
     if (quantity > 0 && !store.isEmpty) {
       $.ajax({
         url: this.props.url,
         method: 'post',
         data: {
           quantity: quantity,
-          variant: store.variant.id
+          variant: store.variant.id,
+          customizations: JSON.stringify(customizations)
         },
         success: () => {
           onAddToCartSuccess();
@@ -94,14 +109,21 @@ export default class VariantPicker extends Component {
   }
 
   matchAttribute = (id) => {
-    const { variantAttributes } = this.props;
-    const match = variantAttributes.filter(attribute => attribute.pk.toString() === id);
+    const { variantAttributes, customAttributes } = this.props;
+    let allAttributes = variantAttributes.concat(customAttributes);
+    const match = allAttributes.filter(attribute => attribute.pk.toString() === id);
     return match.length > 0 ? match[0] : null;
   }
 
-  matchAttributeBySlug = (slug) => {
+  matchVariantAttributeBySlug = (slug) => {
     const { variantAttributes } = this.props;
     const match = variantAttributes.filter(attribute => attribute.slug === slug);
+    return match.length > 0 ? match[0] : null;
+  }
+
+  matchCustomAttributeBySlug = (slug) => {
+    const { customAttributes } = this.props;
+    const match = customAttributes.filter(attribute => attribute.slug === slug);
     return match.length > 0 ? match[0] : null;
   }
 
@@ -127,8 +149,8 @@ export default class VariantPicker extends Component {
   }
 
   render() {
-    const { store, variantAttributes } = this.props;
-    const { errors, selection, quantity } = this.state;
+    const { store, variantAttributes, customAttributes } = this.props;
+    const { errors, selection, customizations, quantity } = this.state;
     const disableAddToCart = store.isEmpty;
 
     const addToCartBtnClasses = classNames({
@@ -144,6 +166,12 @@ export default class VariantPicker extends Component {
             handleChange={this.handleAttributeChange}
             key={i}
             selected={selection[attribute.pk]}
+          />
+        )}
+        {customAttributes.map(attribute =>
+          <AttributeSelectionWidget
+            attribute={attribute}
+            selected={customizations[attribute.pk]}
           />
         )}
         <div className="clearfix">
