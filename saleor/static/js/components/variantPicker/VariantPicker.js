@@ -23,8 +23,7 @@ export default class VariantPicker extends Component {
   constructor(props) {
     super(props);
     const { variants } = this.props;
-
-    const variant = variants.filter(v => !!Object.keys(v.attributes).length)[0];
+    const defaultVariant = variants.filter(v => !!Object.keys(v.attributes).length)[0];
     const params = queryString.parse(location.search);
     let selection = {};
     if (Object.keys(params).length) {
@@ -42,7 +41,7 @@ export default class VariantPicker extends Component {
         }
       });
     } else if (Object.keys(variant).length) {
-      selection = variant.attributes;
+      selection = defaultVariant.attributes;
     }
     this.state = {
       errors: {},
