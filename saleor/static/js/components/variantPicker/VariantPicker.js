@@ -75,7 +75,9 @@ export default class VariantPicker extends Component {
         data: {
           quantity: quantity,
           variant: store.variant.id,
-          customizations: JSON.stringify(customizations)
+          data: JSON.stringify({
+            customizations: customizations
+          })
         },
         success: () => {
           onAddToCartSuccess();
