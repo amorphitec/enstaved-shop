@@ -170,10 +170,16 @@ class Cart(models.Model):
         if line:
             return line[0]
 
-    def add(self, variant, quantity=1, data=None, replace=False,
-            check_quantity=True):
+    def get_variant_lines(self, variant):
+        all_lines = self.lines.all()
+        return [line for line in all_lines
+                if line.variant_id == variant.id]
+
+    def add(self, variant, quantity=1, data=None,
+            replace=False, check_quantity=True):
         cart_line, created = self.lines.get_or_create(
-            variant=variant, defaults={'quantity': 0, 'data': data or {}})
+            variant=variant, data=data,
+            defaults={'quantity': 0, 'data': data or {}})
         if replace:
             new_quantity = quantity
         else:

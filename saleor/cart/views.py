@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import json
 
 from babeldjango.templatetags.babel import currencyfmt
 from django.core.urlresolvers import reverse
@@ -8,12 +9,13 @@ from django.template.response import TemplateResponse
 
 from ..core.utils import to_local_currency, get_user_shipping_country
 from ..product.models import ProductVariant
+from ..product.utils import (get_custom_attributes_data,
+                             get_customizations_by_name)
 from ..shipping.utils import get_shipment_options
 from .forms import ReplaceCartLineForm, CountryForm
 from .models import Cart
 from .utils import (check_product_availability_and_warn, get_or_empty_db_cart,
                     get_cart_data)
-
 
 @get_or_empty_db_cart(cart_queryset=Cart.objects.for_display())
 def index(request, cart):
@@ -22,11 +24,14 @@ def index(request, cart):
     check_product_availability_and_warn(request, cart)
 
     for line in cart.lines.all():
-        initial = {'quantity': line.get_quantity()}
+        initial = {'quantity': line.get_quantity(),
+                   'data':  json.dumps(line.data)}
         form = ReplaceCartLineForm(None, cart=cart, variant=line.variant,
-                                   initial=initial, discounts=discounts)
+                                   initial=initial, discounts=discounts,)
         cart_lines.append({
             'variant': line.variant,
+            'get_customizations_by_name': get_customizations_by_name(
+                line.variant.product, line.data['customizations']),
             'get_price_per_item': line.get_price_per_item(discounts),
             'get_total': line.get_total(discounts=discounts),
             'form': form})
@@ -70,9 +75,10 @@ def update(request, cart, variant_id):
         return redirect('cart:index')
     variant = get_object_or_404(ProductVariant, pk=variant_id)
     discounts = request.discounts
-    status = None
+    data = request.POST['data']
+    initial = {'data': data}
     form = ReplaceCartLineForm(request.POST, cart=cart, variant=variant,
-                               discounts=discounts)
+                               discounts=discounts, initial=initial)
     if form.is_valid():
         form.save()
         response = {'variantId': variant_id,
@@ -82,7 +88,7 @@ def update(request, cart, variant_id):
                         'numItems': cart.quantity,
                         'numLines': len(cart)
                     }}
-        updated_line = cart.get_line(form.cart_line.variant)
+        updated_line = cart.get_line(form.cart_line.variant, json.loads(data))
         if updated_line:
             response['subtotal'] = currencyfmt(
                 updated_line.get_total(discounts=discounts).gross,

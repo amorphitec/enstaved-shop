@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import json
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, NON_FIELD_ERRORS
@@ -20,10 +21,12 @@ class QuantityField(forms.IntegerField):
 class AddToCartForm(forms.Form):
     """Add-to-cart form
 
-    Allows selection of a product variant and quantity.
+    Allows selection of a product variant, quantity and additional data.
     The save method adds it to the cart.
     """
     quantity = QuantityField(label=pgettext_lazy('Add to cart form field label', 'Quantity'))
+    data = forms.CharField(label=pgettext_lazy('Add to cart form field label',
+                                                         'Data'))
     error_messages = {
         'not-available': pgettext_lazy(
             'Add to cart form error',
@@ -41,7 +44,11 @@ class AddToCartForm(forms.Form):
             'Add to cart form error',
             'Only %d remaining in stock.',
             'Only %d remaining in stock.'
-        )
+        ),
+        'invalid-data': pgettext_lazy(
+            'Add to cart form error',
+            'Oops. The additional data provied is invalid.'
+        ),
     }
 
     def __init__(self, *args, **kwargs):
@@ -56,13 +63,19 @@ class AddToCartForm(forms.Form):
         if quantity is None:
             return cleaned_data
         try:
+            data_json = cleaned_data.get('data', '{}')
+            data = json.loads(data_json)
+        except:
+            msg = self.error_messages['invalid-data']
+            self.add_error('data', msg)
+        try:
             product_variant = self.get_variant(cleaned_data)
         except ObjectDoesNotExist:
             msg = self.error_messages['variant-does-not-exists']
             self.add_error(NON_FIELD_ERRORS, msg)
         else:
-            cart_line = self.cart.get_line(product_variant)
-            used_quantity = cart_line.quantity if cart_line else 0
+            cart_lines = self.cart.get_variant_lines(product_variant)
+            used_quantity = sum(line.quantity for line in cart_lines)
             new_quantity = quantity + used_quantity
             try:
                 product_variant.check_quantity(new_quantity)
@@ -79,10 +92,15 @@ class AddToCartForm(forms.Form):
     def save(self):
         """Adds the selected product variant and quantity to the cart"""
         product_variant = self.get_variant(self.cleaned_data)
+        data = self.get_data(self.cleaned_data)
         return self.cart.add(variant=product_variant,
-                             quantity=self.cleaned_data['quantity'])
+                             quantity=self.cleaned_data['quantity'],
+                             data=data)
 
     def get_variant(self, cleaned_data):
+        raise NotImplementedError()
+
+    def get_data(self, cleaned_data):
         raise NotImplementedError()
 
 
@@ -95,14 +113,18 @@ class ReplaceCartLineForm(AddToCartForm):
         self.variant = kwargs.pop('variant')
         kwargs['product'] = self.variant.product
         super(ReplaceCartLineForm, self).__init__(*args, **kwargs)
-        self.cart_line = self.cart.get_line(self.variant)
+        data = json.loads(self.get_initial_for_field(self.fields['data'],
+                                                     'data'))
+        self.cart_line = self.cart.get_line(self.variant, data)
         self.fields['quantity'].widget.attrs = {
             'min': 1, 'max': settings.MAX_CART_LINE_QUANTITY}
 
     def clean_quantity(self):
         quantity = self.cleaned_data['quantity']
+        variant_lines = self.cart.get_variant_lines(self.variant)
+        quantity_total = sum([line.get_quantity() for line in variant_lines])
         try:
-            self.variant.check_quantity(quantity)
+            self.variant.check_quantity(quantity_total)
         except InsufficientStock as e:
             msg = self.error_messages['insufficient-stock']
             raise forms.ValidationError(msg % e.item.get_stock_quantity())
@@ -116,11 +138,15 @@ class ReplaceCartLineForm(AddToCartForm):
     def get_variant(self, cleaned_data):
         return self.variant
 
+    def get_data(self, cleaned_data):
+        return json.loads(cleaned_data.get('data', '{}'))
+
     def save(self):
         """Replaces the selected product's quantity in cart"""
         product_variant = self.get_variant(self.cleaned_data)
+        data = self.get_data(self.cleaned_data)
         return self.cart.add(product_variant, self.cleaned_data['quantity'],
-                             replace=True)
+                             data=data, replace=True)
 
 
 class CountryForm(forms.Form):
