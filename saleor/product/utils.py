@@ -209,8 +209,6 @@ def get_custom_attributes_data(product):
     attributes = product.product_class.custom_attributes.all()
     attributes_map = {attribute.pk: attribute for attribute in attributes}
     values_map = get_custom_attributes_display_map(product, attributes)
-    # NOTE: might need to pass the entire jsonified default value rather than
-    # just the PK?
     for attribute in attributes:
         data['customAttributes'].append({
             'pk': attribute.pk,
@@ -288,3 +286,16 @@ def get_custom_attributes_display_map(obj, attributes):
             else:
                 display_map[attribute.pk] = value
     return display_map
+
+
+def get_customizations_by_name(product, customizations):
+    custom_attributes=get_custom_attributes_data(product)['customAttributes']
+    customizations_by_name = {}
+    for customized_attribute_pk, customized_value_pk in customizations.items():
+        for attribute in custom_attributes:
+            if str(attribute['pk']) == customized_attribute_pk:
+                for value in attribute['values']:
+                    if str(value['pk']) == customized_value_pk:
+                        customizations_by_name[attribute.get('name', '')] = \
+                            value['name']
+    return customizations_by_name
