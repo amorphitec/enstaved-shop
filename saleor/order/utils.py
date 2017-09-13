@@ -3,10 +3,12 @@ from functools import wraps
 
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404, redirect
+from django.utils import six
 from payments.signals import status_changed
 
 from ..core import analytics
 from ..product.models import Stock
+from ..product.utils import get_customizations_by_name
 from ..userprofile.utils import store_user_address
 from .models import Order
 from . import OrderStatus
@@ -54,11 +56,18 @@ def add_items_to_delivery_group(delivery_group, partition, discounts=None):
         price = item_line.get_price_per_item(discounts)
         quantity = item_line.get_quantity()
         stock = product_variant.select_stockrecord(quantity)
+        product_name = product_variant.display_product()
+        customizations = get_customizations_by_name(
+            product_variant.product, item_line.data['customizations'])
+        if len(customizations) > 0:
+            product_name = '%s (%s)' % (product_name, ', '.join(
+                ['%s: %s' % (key, value)
+                 for (key, value) in six.iteritems(customizations)]))
         delivery_group.items.create(
             product=product_variant.product,
             quantity=quantity,
             unit_price_net=price.net,
-            product_name=product_variant.display_product(),
+            product_name=product_name,
             product_sku=product_variant.sku,
             unit_price_gross=price.gross,
             stock=stock,
