@@ -57,7 +57,7 @@
                   <div class="{% if form.quantity.errors %} has-error{% endif %}" tabindex="-1">
                     {{ line.form.quantity }}
                   </div>
-                  {{ line.form.data }}
+                  {{ line.form.data.as_hidden }}
                   {% csrf_token %}
                 </form>
                 <span class="cart-item-delete">
