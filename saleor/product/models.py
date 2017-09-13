@@ -328,15 +328,18 @@ class StockManager(models.Manager):
     def allocate_stock(self, stock, quantity):
         stock.quantity_allocated = F('quantity_allocated') + quantity
         stock.save(update_fields=['quantity_allocated'])
+        stock.refresh_from_db()
 
     def deallocate_stock(self, stock, quantity):
         stock.quantity_allocated = F('quantity_allocated') - quantity
         stock.save(update_fields=['quantity_allocated'])
+        stock.refresh_from_db()
 
     def decrease_stock(self, stock, quantity):
         stock.quantity = F('quantity') - quantity
         stock.quantity_allocated = F('quantity_allocated') - quantity
         stock.save(update_fields=['quantity', 'quantity_allocated'])
+        stock.refresh_from_db()
 
 
 @python_2_unicode_compatible
