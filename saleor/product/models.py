@@ -78,13 +78,16 @@ class ProductClass(models.Model):
         'ProductAttribute', related_name='products_class', blank=True,
         verbose_name=pgettext_lazy('Product class field',
                                    'product attributes'))
+    custom_attributes = models.ManyToManyField(
+        'ProductAttribute', related_name='product_customizations_class',
+        blank=True, verbose_name=pgettext_lazy('Product class field',
+                                               'custom attributes'))
     variant_attributes = models.ManyToManyField(
         'ProductAttribute', related_name='product_variants_class', blank=True,
         verbose_name=pgettext_lazy('Product class field', 'variant attributes'))
     is_shipping_required = models.BooleanField(
         pgettext_lazy('Product class field', 'is shipping required'),
         default=False)
-
     class Meta:
         verbose_name = pgettext_lazy(
             'Product class model', 'product class')
@@ -128,6 +131,8 @@ class Product(models.Model, ItemRange, index.Indexed):
         pgettext_lazy('Product field', 'available on'), blank=True, null=True)
     attributes = HStoreField(pgettext_lazy('Product field', 'attributes'),
                              default={})
+    custom_attributes = HStoreField(
+        pgettext_lazy('Product field', 'custom attributes'), default={})
     updated_at = models.DateTimeField(
         pgettext_lazy('Product field', 'updated at'), auto_now=True, null=True)
     is_featured = models.BooleanField(
@@ -188,8 +193,14 @@ class Product(models.Model, ItemRange, index.Indexed):
     def get_attribute(self, pk):
         return self.attributes.get(smart_text(pk))
 
+    def get_custom_attribute(self, pk):
+        return self.custom_attributes.get(smart_text(pk))
+
     def set_attribute(self, pk, value_pk):
         self.attributes[smart_text(pk)] = smart_text(value_pk)
+
+    def set_custom_attribute(self, pk, value_pk):
+        self.custom_attributes[smart_text(pk)] = smart_text(value_pk)
 
     def get_price_range(self, discounts=None,  **kwargs):
         if not self.variants.exists():
@@ -317,15 +328,18 @@ class StockManager(models.Manager):
     def allocate_stock(self, stock, quantity):
         stock.quantity_allocated = F('quantity_allocated') + quantity
         stock.save(update_fields=['quantity_allocated'])
+        stock.refresh_from_db()
 
     def deallocate_stock(self, stock, quantity):
         stock.quantity_allocated = F('quantity_allocated') - quantity
         stock.save(update_fields=['quantity_allocated'])
+        stock.refresh_from_db()
 
     def decrease_stock(self, stock, quantity):
         stock.quantity = F('quantity') - quantity
         stock.quantity_allocated = F('quantity_allocated') - quantity
         stock.save(update_fields=['quantity', 'quantity_allocated'])
+        stock.refresh_from_db()
 
 
 @python_2_unicode_compatible

@@ -227,6 +227,7 @@ const variantPriceContainer = document.getElementById('variant-price-component')
 
 if (variantPickerContainer) {
   const variantPickerData = JSON.parse(variantPickerContainer.dataset.variantPickerData);
+  const customAttributeData = JSON.parse(variantPickerContainer.dataset.customAttributeData);
   ReactDOM.render(
     <VariantPicker
       onAddToCartError={onAddToCartError}
@@ -234,6 +235,7 @@ if (variantPickerContainer) {
       store={variantPickerStore}
       url={variantPickerContainer.dataset.action}
       variantAttributes={variantPickerData.variantAttributes}
+      customAttributes={customAttributeData.customAttributes}
       variants={variantPickerData.variants}
     />,
     variantPickerContainer
@@ -295,16 +297,21 @@ let $removeProductSucces = $('.remove-product-alert');
 let $closeMsg = $('.close-msg');
 $cartLine.each(function() {
   let $quantityInput = $(this).find('#id_quantity');
+  let $dataInput = $(this).find('#id_data');
   let cartFormUrl = $(this).find('.form-cart').attr('action');
-  let $qunatityError = $(this).find('.cart__line__quantity-error');
+  let $quantityError = $(this).find('.cart__line__quantity-error');
   let $subtotal = $(this).find('.cart-item-price p');
   let $deleteIcon = $(this).find('.cart-item-delete');
   $(this).on('change', $quantityInput, (e) => {
     let newQuantity = $quantityInput.val();
+		let data = $dataInput.val();
     $.ajax({
       url: cartFormUrl,
       method: 'POST',
-      data: {quantity: newQuantity},
+      data: {
+        quantity: newQuantity,
+        data: data,
+			},
       success: (response) => {
         if (newQuantity == 0) {
           if (response.cart.numLines == 0) {
@@ -318,20 +325,24 @@ $cartLine.each(function() {
           $subtotal.html(response.subtotal);
         }
         $cartBadge.html(response.cart.numItems);
-        $qunatityError.html('');
+        $quantityError.html('');
         $cartDropdown.load(summaryLink);
         deliveryAjax();
       },
       error: (response) => {
-        $qunatityError.html(getAjaxError(response));
+        $quantityError.html(getAjaxError(response));
       }
     });
   });
   $deleteIcon.on('click', (e) => {
+		let data = $dataInput.val();
     $.ajax({
       url: cartFormUrl,
       method: 'POST',
-      data: {quantity: 0},
+      data: {
+        quantity: 0,
+        data: data,
+			},
       success: (response) => {
         if (response.cart.numLines >= 1) {
           $(this).fadeOut();

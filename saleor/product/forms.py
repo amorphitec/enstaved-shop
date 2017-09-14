@@ -40,3 +40,5 @@ class ProductForm(AddToCartForm):
     def get_variant(self, cleaned_data):
         return cleaned_data.get('variant')
 
+    def get_data(self, cleaned_data):
+        return json.loads(cleaned_data.get('data', '{}'))

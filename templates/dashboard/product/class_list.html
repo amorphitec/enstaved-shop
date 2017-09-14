@@ -35,7 +35,7 @@
     <div class="col s12">
       {% if product_classes %}
         <ul class="collection list">
-          {% for pk, name, has_variants, product_attributes, variant_attributes in product_classes %}
+          {% for pk, name, has_variants, product_attributes, variant_attributes, custom_attributes in product_classes %}
             <li class="collection-item list-item">
               <a class="title" href="{% url 'dashboard:product-class-update' pk=pk %}">
                 <span class="list-item-name">
@@ -53,6 +53,9 @@
                   {% endif %}
                   {% if product_attributes %}
                     &middot; {% trans "Product attributes" context "Product type item list text" %}: {{ product_attributes|join:", " }}
+                  {% endif %}
+                  {% if custom_attributes %}
+                    &middot; {% trans "Custom attributes" context "Product type item list text" %}: {{ custom_attributes|join:", " }}
                   {% endif %}
                 </p>
               </a>

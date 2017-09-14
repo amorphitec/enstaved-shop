@@ -17,7 +17,7 @@ except ImportError:
 
 def products_visible_to_user(user):
     from .models import Product
-    if user.is_authenticated() and user.is_active and user.is_staff:
+    if user.is_authenticated and user.is_active and user.is_staff:
         return Product.objects.all()
     else:
         return Product.objects.get_available_products()
@@ -204,6 +204,22 @@ def get_variant_picker_data(product, discounts=None, local_currency=None):
     return data
 
 
+def get_custom_attributes_data(product):
+    data = {'customAttributes': []}
+    attributes = product.product_class.custom_attributes.all()
+    attributes_map = {attribute.pk: attribute for attribute in attributes}
+    values_map = get_custom_attributes_display_map(product, attributes)
+    for attribute in attributes:
+        data['customAttributes'].append({
+            'pk': attribute.pk,
+            'name': attribute.name,
+            'slug': attribute.slug,
+            'default': values_map[attribute.pk].pk,
+            'values': [{'pk': value.pk, 'name': value.name, 'slug': value.slug}
+                       for value in attribute.values.all()]})
+    return data
+
+
 def get_product_attributes_data(product):
     attributes = product.product_class.product_attributes.all()
     attributes_map = {attribute.pk: attribute for attribute in attributes}
@@ -256,3 +272,30 @@ def get_attributes_display_map(obj, attributes):
             else:
                 display_map[attribute.pk] = value
     return display_map
+
+
+def get_custom_attributes_display_map(obj, attributes):
+    display_map = {}
+    for attribute in attributes:
+        value = obj.custom_attributes.get(smart_text(attribute.pk))
+        if value:
+            choices = {smart_text(a.pk): a for a in attribute.values.all()}
+            choice_obj = choices.get(value)
+            if choice_obj:
+                display_map[attribute.pk] = choice_obj
+            else:
+                display_map[attribute.pk] = value
+    return display_map
+
+
+def get_customizations_by_name(product, customizations):
+    custom_attributes=get_custom_attributes_data(product)['customAttributes']
+    customizations_by_name = {}
+    for customized_attribute_pk, customized_value_pk in customizations.items():
+        for attribute in custom_attributes:
+            if str(attribute['pk']) == customized_attribute_pk:
+                for value in attribute['values']:
+                    if str(value['pk']) == customized_value_pk:
+                        customizations_by_name[attribute.get('name', '')] = \
+                            value['name']
+    return customizations_by_name
