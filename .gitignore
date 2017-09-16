@@ -24,5 +24,4 @@ dist/
 /media/
 /node_modules/
 /static/
-webpack-bundle.json
 notes
