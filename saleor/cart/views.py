@@ -9,8 +9,7 @@ from django.template.response import TemplateResponse
 
 from ..core.utils import to_local_currency, get_user_shipping_country
 from ..product.models import ProductVariant
-from ..product.utils import (get_custom_attributes_data,
-                             get_customizations_by_name)
+from ..product.utils import get_customizations_by_name
 from ..shipping.utils import get_shipment_options
 from .forms import ReplaceCartLineForm, CountryForm
 from .models import Cart
