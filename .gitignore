@@ -10,7 +10,7 @@
 !.pylintrc
 !.travis*
 !.eslintrc.json
-*.css
+#*.css
 *.log
 *.pot
 *.pyc
@@ -21,7 +21,9 @@ dist/
 *\.egg*
 # data
 /docs/_build/
-/media/
+#/media/
 /node_modules/
-/static/
+#/static/
+#/saleor/static/assets/
+#webpack-bundle.json
 notes
