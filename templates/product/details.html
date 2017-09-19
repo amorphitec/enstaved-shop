@@ -106,6 +106,12 @@
           </h2>
         {% endif %}
       {% endif %}
+      <div class="product__info__description">
+        <!--<h3>{% trans "Description" context "Product details title" %}</h3>-->
+        <hr>
+        {{ product.description|markdown }}
+      </div>
+      <hr>
       {% if is_visible and product.is_in_stock %}
         {% block orderform %}
           {% if show_variant_picker %}
@@ -136,12 +142,6 @@
           {% blocktrans context "Product details text" %}This product is currently <strong>unavailable</strong>.{% endblocktrans %}
         </p>
       {% endif %}
-      <div class="product__info__description">
-        <h3>{% trans "Description" context "Product details title" %}</h3>
-        <hr>
-        {{ product.description|markdown }}
-      </div>
-      <hr>
       <table>
         {% for attribute, value in product_attributes.items %}
           <tr>
