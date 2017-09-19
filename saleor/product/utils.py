@@ -210,6 +210,9 @@ def get_custom_attributes_data(product):
     attributes_map = {attribute.pk: attribute for attribute in attributes}
     values_map = get_custom_attributes_display_map(product, attributes)
     for attribute in attributes:
+        if attribute.pk not in values_map.keys():
+            # Attribute has not been defined for this product so skip it.
+            continue
         data['customAttributes'].append({
             'pk': attribute.pk,
             'name': attribute.name,
