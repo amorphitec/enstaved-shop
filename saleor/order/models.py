@@ -332,7 +332,7 @@ class OrderedItem(models.Model, ItemLine):
         on_delete=models.SET_NULL,
         verbose_name=pgettext_lazy('Ordered item field', 'product'))
     product_name = models.CharField(
-        pgettext_lazy('Ordered item field', 'product name'), max_length=128)
+        pgettext_lazy('Ordered item field', 'product name'), max_length=512)
     product_sku = models.CharField(
         pgettext_lazy('Ordered item field', 'sku'), max_length=32)
     stock_location = models.CharField(
