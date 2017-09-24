@@ -15,7 +15,7 @@ Saleor has a "designed to be forked" model. This means we must be mindful of whe
 
 ```
 git checkout master
-git fetch
+git fetch upstream
 git merge upstream/master
 ```
 
