@@ -39,18 +39,24 @@
     </div>
     <div class="col-md-6 col-12 product__gallery">
       {% with images=product_images %}
-        {% if images %}
+        {% if images or render_dynamic_image is True%}
           <div id="carousel-example-generic" class="carousel slide">
             <div class="carousel-inner" role="listbox">
-              {% for image in images %}
-                <div class="carousel-item{% if forloop.first %} active{% endif %}">
-                  <img class="d-block img-fluid" 
-                       src="{% get_thumbnail image.image method="crop" size="540x540" %}" 
-                       srcset="{% get_thumbnail image.image method="crop" size="540x540" %} 1x, {% get_thumbnail image.image method="crop" size="1080x1080" %} 2x" alt="">
-                </div>
-              {% endfor %}
+            {% if render_dynamic_image is True %}
+              <div class="carousel-item active">
+              <!-- TODO: render animated spinner in JS (and also while waiting) -->
+                <img id="dynamic-render" class="d-block img-fluid" src="{% static "images/loader.svg" %}" width=540 height=540 %}>
+              </div>
+            {% endif %}
+            {% for image in images %}
+              <div class="carousel-item{% if forloop.first and render_dynamic_image is False%} active{% endif %}">
+                <img class="d-block img-fluid"
+                     src="{% get_thumbnail image.image method="crop" size="540x540" %}"
+                     srcset="{% get_thumbnail image.image method="crop" size="540x540" %} 1x, {% get_thumbnail image.image method="crop" size="1080x1080" %} 2x" alt="">
+              </div>
+            {% endfor %}
             </div>
-            {% if images|length > 1 %}
+            {% if images|length > 1 or render_dynamic_image is True and images|length > 0 %}
               <a class="carousel-control-prev" href="#carousel-example-generic" role="button" data-slide="prev">
                 <svg data-src="{% static "images/gallery_arrow.svg" %}" />
               </a>
@@ -59,15 +65,22 @@
               </a>
             {% endif %}
             <ol class="carousel-indicators hidden-sm-down">
+            {% if render_dynamic_image is True %}
+               <li data-target="#carousel-example-generic" data-slide-to="0" class="active">
+                 <img src="{% static "images/enstaved_cart.png" %}" style="width:26px; height:60px;"
+                      alt="">
+                 <!-- TODO: srcset -->
+              </li>
+            {% endif %}
+            {% if images|length > 1 or render_dynamic_image is True and images|length > 0 %}
               {% for image in images %}
-                {% if images|length > 1 %}
-                  <li data-target="#carousel-example-generic" data-slide-to="{{ forloop.counter0 }}"{% if forloop.first %} class="active"{% endif %}>
-                    <img src="{% get_thumbnail image.image method="crop" size="60x60" %}" 
+                <li data-target="#carousel-example-generic" data-slide-to="{% if render_dynamic_image is True %}{{ forloop.counter0|add:"1" }}{% else %}{{ forloop.counter0 }}{% endif %}"{% if render_dynamic_image is False and forloop.first %} class="active"{% endif %}>
+                   <img src="{% get_thumbnail image.image method="crop" size="60x60" %}"
                          srcset="{% get_thumbnail image.image method="crop" size="60x60" %} 1x, {% get_thumbnail image.image method="crop" size="120x120" %} 2x" 
                          alt="">
-                  </li>
-                {% endif %}
+                </li>
               {% endfor %}
+            {% endif %}
             </ol>
           </div>
         {% else %}
