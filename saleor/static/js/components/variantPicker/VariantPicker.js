@@ -147,10 +147,10 @@ export default class VariantPicker extends Component {
     let bodyColor = []
     // Top and bottom colors - We currently support up to 4 of each.
     for (let i = 1; i < 5; i++) {  
-      if (attributes.hasOwnProperty('top-color-' + i)) {
+      if (attributes.hasOwnProperty('top-color-' + i) && attributes['top-color-' + i] != '<None>') {
         topColor.push(attributes['top-color-' + i]);
       }
-      if (attributes.hasOwnProperty('body-color-' + i)) {
+      if (attributes.hasOwnProperty('body-color-' + i) && attributes['body-color-' + i] != '<None>') {
         bodyColor.push(attributes['body-color-' + i]);
       }
     }
