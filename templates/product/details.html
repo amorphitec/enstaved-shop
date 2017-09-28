@@ -44,8 +44,7 @@
             <div class="carousel-inner" role="listbox">
             {% if render_dynamic_image is True %}
               <div class="carousel-item active">
-              <!-- TODO: render animated spinner in JS (and also while waiting) -->
-                <img id="dynamic-render" class="d-block img-fluid" src="{% static "images/loader.svg" %}" width=540 height=540 %}>
+                <img id="dynamic-render" class="d-block img-fluid loader-large" src="{% static "images/placeholder540x540.png" %}" width=540 height=540>
               </div>
             {% endif %}
             {% for image in images %}
@@ -67,7 +66,7 @@
             <ol class="carousel-indicators hidden-sm-down">
             {% if render_dynamic_image is True %}
                <li data-target="#carousel-example-generic" data-slide-to="0" class="active">
-                 <img src="{% static "images/enstaved_cart.png" %}" style="width:26px; height:60px;"
+                 <img src="{% static "images/enstaved_cart.png" %}" style="width:26px; height:58px;"
                       alt="">
                  <!-- TODO: srcset -->
               </li>
