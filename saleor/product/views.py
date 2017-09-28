@@ -62,6 +62,10 @@ def product_details(request, slug, product_id, form=None):
     template_name = 'product/details_%s.html' % (
         type(product).__name__.lower(),)
     templates = [template_name, 'product/details.html']
+    # TODO: use config to define dynamically rendered products
+    render_dynamic_image = False
+    if 'staff' in str(product).lower():
+        render_dynamic_image = True
     product_images = get_product_images(product)
     variant_picker_data = get_variant_picker_data(
         product, request.discounts, request.currency)
@@ -77,6 +81,7 @@ def product_details(request, slug, product_id, form=None):
          'product': product,
          'product_attributes': product_attributes,
          'product_images': product_images,
+         'render_dynamic_image': render_dynamic_image,
          'show_variant_picker': show_variant_picker,
          'variant_picker_data': json.dumps(
              variant_picker_data, default=serialize_decimal),

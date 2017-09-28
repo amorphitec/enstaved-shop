@@ -63,6 +63,8 @@ export default class VariantPicker extends Component {
       customizations: customizations
     };
     this.matchVariantFromSelection();
+    this.updateParams();
+    this.updateDynamicRender();
   }
 
   handleAddToCart = () => {
@@ -95,6 +97,7 @@ export default class VariantPicker extends Component {
     }, () => {
       this.matchVariantFromSelection();
       this.updateParams();
+      this.updateDynamicRender();
     });
   }
 
@@ -103,7 +106,75 @@ export default class VariantPicker extends Component {
       customizations: Object.assign({}, this.state.customizations, { [attrId]: valueId })
     }, () => {
       this.updateParams();
+      this.updateDynamicRender();
     });
+  }
+
+  updateDynamicRender() {
+    // Update the dynamically-rendered product image if it exists.
+    // TODO: We do this with jQuery because the product image carousel isn't
+    // part of a React component. 
+    if (!$('#dynamic-render').length) {
+      return;
+    }
+    //let hieronymusBaseUrl = "https://hieronymus.enstaved.com/render_staff?";
+    let hieronymusBaseUrl = "http://localhost:5000/render_staff?";
+    const allAttributes = {};
+    Object.keys(this.state.selection).forEach(attrId => {
+      const attribute = this.matchAttribute(attrId);
+      const value = this.matchAttributeValue(attribute, this.state.selection[attrId]);
+      if (attribute && value) {
+        allAttributes[attribute.slug] = value.slug;
+      }
+    });
+    Object.keys(this.state.customizations).forEach(attrId => {
+      const attribute = this.matchAttribute(attrId);
+      const value = this.matchAttributeValue(attribute, this.state.customizations[attrId]);
+      if (attribute && value) {
+        allAttributes[attribute.slug] = value.slug;
+      }
+    });
+    const params = this.getDynamicRenderParams(allAttributes)
+    const url = hieronymusBaseUrl + queryString.stringify(params)
+    $.get(url, function(src) {
+      $("#dynamic-render").attr('src', src);
+    }, 'text');
+  }
+
+  getDynamicRenderParams(attributes) {
+    // Convert attributes into url params for hieronymus dynamic rendering.
+    let params = {}
+    let topColor = []
+    let bodyColor = []
+    // Top and bottom colors - We currently support up to 4 of each.
+    for (let i = 1; i < 5; i++) {  
+      if (attributes.hasOwnProperty('top-color-' + i)) {
+        topColor.push(attributes['top-color-' + i]);
+      }
+      if (attributes.hasOwnProperty('body-color-' + i)) {
+        bodyColor.push(attributes['body-color-' + i]);
+      }
+    }
+    params['top-color'] = topColor;
+    params['body-color'] = bodyColor;
+    // Sections
+    if (attributes.hasOwnProperty('sections')) {
+      const sIndex = attributes['sections'].lastIndexOf('-')
+      params['body-sections'] = attributes['sections'].substring(0, sIndex)
+    }
+    // Top
+    const topUnfiltered = window.location.pathname.split('/').slice(-2)[0];
+    const cIndex = topUnfiltered.lastIndexOf('-')
+    params['top-id'] = topUnfiltered.substring(0, cIndex)
+    // Body
+    if (attributes.hasOwnProperty('body')) {
+      params['body-id'] = attributes['body']
+    }
+    // Base
+    if (attributes.hasOwnProperty('base')) {
+      params['base-id'] = attributes['base']
+    }
+    return params;
   }
 
   updateParams() {
