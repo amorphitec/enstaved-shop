@@ -158,8 +158,7 @@ export default class VariantPicker extends Component {
     params['body-color'] = bodyColor;
     // Sections
     if (attributes.hasOwnProperty('sections')) {
-      const sIndex = attributes['sections'].lastIndexOf('-')
-      params['body-sections'] = attributes['sections'].substring(0, sIndex)
+      params['body-sections'] = attributes['sections'].split('-')[0]
     }
     // Top
     const topUnfiltered = window.location.pathname.split('/').slice(-2)[0];
