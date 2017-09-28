@@ -5766,8 +5766,7 @@ webpackJsonp([2],{
 	      params['body-color'] = bodyColor;
 	      // Sections
 	      if (attributes.hasOwnProperty('sections')) {
-	        var sIndex = attributes['sections'].lastIndexOf('-');
-	        params['body-sections'] = attributes['sections'].substring(0, sIndex);
+	        params['body-sections'] = attributes['sections'].split('-')[0];
 	      }
 	      // Top
 	      var topUnfiltered = window.location.pathname.split('/').slice(-2)[0];
