@@ -117,8 +117,7 @@ export default class VariantPicker extends Component {
     if (!$('#dynamic-render').length) {
       return;
     }
-    //let hieronymusBaseUrl = "https://hieronymus.enstaved.com/render_staff?";
-    let hieronymusBaseUrl = "http://localhost:5000/render_staff?";
+    let hieronymusBaseUrl = "https://hieronymus.enstaved.com/render_staff?";
     const allAttributes = {};
     Object.keys(this.state.selection).forEach(attrId => {
       const attribute = this.matchAttribute(attrId);
