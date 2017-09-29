@@ -257,8 +257,9 @@ PAYMENT_MODEL = 'order.Payment'
 PAYMENT_VARIANTS = {
     'default': ('payments.dummy.DummyProvider', {}),
     'stripe': ('payments.stripe.StripeProvider', {
-        'secret_key': os.environ.get('STRIPE_SECRET_KEY'),
-        'public_key': os.environ.get('STRIPE_PUBLIC_KEY'),
+        'secret_key':   os.environ.get('STRIPE_SECRET_KEY'),
+        'public_key':   os.environ.get('STRIPE_PUBLIC_KEY'),
+        'name':         os.environ.get('STRIPE_NAME'),
     })
 }
 
@@ -266,7 +267,7 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 CHECKOUT_PAYMENT_CHOICES = [
-    ('stripe', 'Stripe'),
+    ('stripe', 'Credit Card'),
 ]
 
 MESSAGE_TAGS = {
