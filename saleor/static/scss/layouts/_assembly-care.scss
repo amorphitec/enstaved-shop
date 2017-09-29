@@ -1,0 +1,50 @@
+.assembly {
+  text-align: center;
+  color: $white;
+  h1 {
+    font-weight: 300;
+    text-transform: uppercase;
+  }
+  .btn {
+    margin-top: $global-margin;
+  }
+  &--content-wrapper {
+     display: table;
+     width: 100%;
+     height: 100%;
+  }
+  &--content-inner {
+      display: table-cell;
+      text-align: center;
+      vertical-align: middle;
+      color: white;
+      padding-left: $global-padding;
+      padding-right: $global-padding;
+  }
+  &--content {
+    position:  absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+  }
+  &--square {
+    background-size: cover;
+    position: relative;
+    &:before {
+      content: "";
+      display: block;
+      padding-top: 100%;
+    }
+  }
+  &__assembly1 {
+    .assembly--square {
+      background-image: url('../images/assembly1.jpg');
+      @include media-breakpoint-up(md) {
+        &:before {
+          padding-top: 50%;
+        }
+      }
+    }
+  }
+}

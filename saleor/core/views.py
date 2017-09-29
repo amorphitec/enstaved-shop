@@ -13,6 +13,10 @@ def home(request):
         {'products': products, 'parent': None})
 
 
+def assembly_care(request):
+    return TemplateResponse(request, 'assembly_care.html')
+
+
 @staff_member_required
 def styleguide(request):
     return TemplateResponse(request, 'styleguide.html')
