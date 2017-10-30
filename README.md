@@ -41,3 +41,8 @@ git branch <#1234>-<my_new_feature> master
    ```
    git branch <#1234>-<my_new_feature> enstaved-master
    ```
+## Admin
+
+### Add an admin user
+
+`python manage.py createsuperuser`
